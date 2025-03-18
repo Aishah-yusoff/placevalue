@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Place Value Game</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        #game-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 600px;
+            width: 90%;
+        }
+        #game-area {
+            border: 2px dotted #333;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        input {
+            margin-top: 10px;
+            padding: 5px;
+            font-size: 16px;
+            width: 150px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 5px 10px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        #score, #question-number, #message {
+            margin-top: 10px;
+        }
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.4);
+        }
+        .modal-content {
+            background-color: #fefefe;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 500px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div id="game-container">
+        <div id="game-area">
+            <h2>Place Value Game</h2>
+            <p id="question"></p>
+            <input type="text" id="answer" placeholder="Enter your answer">
+            <button onclick="checkAnswer()">Submit</button>
+        </div>
+        <div id="question-number">Question 1 of 10</div>
+        <div id="score">Score: 0</div>
+        <div id="message"></div>
+    </div>
+
+    <div id="feedback-modal" class="modal">
+        <div class="modal-content">
+            <p id="feedback-message"></p>
+            <p id="correct-answer"></p>
+            <button onclick="closeFeedbackModal()">Next Question</button>
+        </div>
+    </div>
+
+    <div id="end-game-modal" class="modal">
+        <div class="modal-content">
+            <h2>Game Over</h2>
+            <p id="final-score"></p>
+            <button onclick="restartGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        let score = 0;
+        let currentAnswer;
+        let currentQuestionNumber = 1;
+        const totalQuestions = 10;
+
+        const placeValues = ['ones', 'tens', 'hundreds', 'thousands'];
+
+        function generateQuestion() {
+            const number = Math.floor(Math.random() * 9000) + 1000; // 4-digit number
+            const digits = number.toString().split('').map(Number);
+            const questionType = Math.floor(Math.random() * 4);
+
+            let question, answer;
+
+            switch (questionType) {
+                case 0:
+                    const randomPlace = Math.floor(Math.random() * 4);
+                    question = `In ${number}, the digit ${digits[randomPlace]} is in the ____________ place`;
+                    answer = placeValues[3 - randomPlace];
+                    break;
+                case 1:
+                    const randomDigit = Math.floor(Math.random() * 4);
+                    question = `In ${number}, the digit ______ is in the ${placeValues[3 - randomDigit]} place`;
+                    answer = digits[randomDigit].toString();
+                    break;
+                case 2:
+                    const randomValuePlace = Math.floor(Math.random() * 4);
+                    question = `In ${number}, the value of the digit ${digits[randomValuePlace]} is ______`;
+                    answer = (digits[randomValuePlace] * Math.pow(10, 3 - randomValuePlace)).toString();
+                    break;
+                case 3:
+                    const randomStandsFor = Math.floor(Math.random() * 4);
+                    question = `In ${number}, the digit ${digits[randomStandsFor]} stands for _____`;
+                    answer = (digits[randomStandsFor] * Math.pow(10, 3 - randomStandsFor)).toString();
+                    break;
+            }
+
+            return { question, answer };
+        }
+
+        function newQuestion() {
+            if (currentQuestionNumber > totalQuestions) {
+                endGame();
+                return;
+            }
+            const { question, answer } = generateQuestion();
+            document.getElementById('question').textContent = question;
+            document.getElementById('answer').value = '';
+            document.getElementById('question-number').textContent = `Question ${currentQuestionNumber} of ${totalQuestions}`;
+            currentAnswer = answer;
+        }
+
+        function checkAnswer() {
+            const userAnswer = document.getElementById('answer').value.toLowerCase().trim();
+            let feedbackMessage;
+            if (userAnswer === currentAnswer.toLowerCase()) {
+                score++;
+                feedbackMessage = 'Correct! Well done!';
+            } else {
+                feedbackMessage = 'Incorrect.';
+            }
+            document.getElementById('score').textContent = `Score: ${score}`;
+            showFeedbackModal(feedbackMessage, currentAnswer);
+        }
+
+        function showFeedbackModal(message, correctAnswer) {
+            document.getElementById('feedback-message').textContent = message;
+            document.getElementById('correct-answer').textContent = `The correct answer is: ${correctAnswer}`;
+            document.getElementById('feedback-modal').style.display = 'block';
+        }
+
+        function closeFeedbackModal() {
+            document.getElementById('feedback-modal').style.display = 'none';
+            currentQuestionNumber++;
+            newQuestion();
+        }
+
+        function endGame() {
+            document.getElementById('final-score').textContent = `Your final score is: ${score} out of ${totalQuestions}`;
+            document.getElementById('end-game-modal').style.display = 'block';
+        }
+
+        function restartGame() {
+            score = 0;
+            currentQuestionNumber = 1;
+            document.getElementById('score').textContent = 'Score: 0';
+            document.getElementById('end-game-modal').style.display = 'none';
+            newQuestion();
+        }
+
+        document.getElementById('answer').addEventListener('keyup', function(event) {
+            if (event.key === 'Enter') {
+                checkAnswer();
+            }
+        });
+
+        newQuestion();
+    </script>
+</body>
+</html>
